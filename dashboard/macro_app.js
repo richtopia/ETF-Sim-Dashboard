@@ -545,6 +545,29 @@
         updateHoldingsDisplay();
     }
     
+    function getEquityAllocation(dateStr) {
+        const time = new Date(dateStr).getTime();
+        const nasdaqStart = new Date("1971-02-08").getTime();
+        const dowStart = new Date("1985-02-01").getTime();
+        
+        if (time < nasdaqStart) {
+            return [
+                { ticker: "S&P 500", name: "S&P 500 Index (^GSPC)", weight: 1.0, color: "#0ea5e9" }
+            ];
+        } else if (time < dowStart) {
+            return [
+                { ticker: "S&P 500", name: "S&P 500 Index (^GSPC)", weight: 0.5, color: "#0ea5e9" },
+                { ticker: "Nasdaq Composite", name: "Nasdaq Composite Index (^IXIC)", weight: 0.5, color: "#a855f7" }
+            ];
+        } else {
+            return [
+                { ticker: "S&P 500", name: "S&P 500 Index (^GSPC)", weight: 1/3, color: "#0ea5e9" },
+                { ticker: "Nasdaq Composite", name: "Nasdaq Composite Index (^IXIC)", weight: 1/3, color: "#a855f7" },
+                { ticker: "Dow Jones Industrial", name: "Dow Jones Industrial Average (^DJI)", weight: 1/3, color: "#ec4899" }
+            ];
+        }
+    }
+    
     function updateHoldingsDisplay() {
         const select = document.getElementById("holdings-etf-select");
         const slider = document.getElementById("holdings-date-slider");
@@ -564,23 +587,23 @@
         let allocation = [];
         if (pIdx === 0) { // sma_gold
             if (smaState === 100) allocation = [{ ticker: "GOLD", name: "Gold Spot bullion", weight: 1.0, color: COLORS.gold.main }];
-            else allocation = [{ ticker: "EQUITY", name: "Equities Composite Index", weight: 1.0, color: COLORS.equity.main }];
+            else allocation = getEquityAllocation(dateStr);
         } else if (pIdx === 1) { // sma_treas
             if (smaState === 100) allocation = [{ ticker: "TREASURY", name: "10-Year U.S. Treasury Bond", weight: 1.0, color: COLORS.treasury.main }];
-            else allocation = [{ ticker: "EQUITY", name: "Equities Composite Index", weight: 1.0, color: COLORS.equity.main }];
+            else allocation = getEquityAllocation(dateStr);
         } else if (pIdx === 2) { // macro_gold
             if (score >= 50.0) allocation = [{ ticker: "GOLD", name: "Gold Spot bullion", weight: 1.0, color: COLORS.gold.main }];
-            else allocation = [{ ticker: "EQUITY", name: "Equities Composite Index", weight: 1.0, color: COLORS.equity.main }];
+            else allocation = getEquityAllocation(dateStr);
         } else if (pIdx === 3) { // macro_treas
             if (score >= 50.0) allocation = [{ ticker: "TREASURY", name: "10-Year U.S. Treasury Bond", weight: 1.0, color: COLORS.treasury.main }];
-            else allocation = [{ ticker: "EQUITY", name: "Equities Composite Index", weight: 1.0, color: COLORS.equity.main }];
+            else allocation = getEquityAllocation(dateStr);
         }
         
         gridEl.innerHTML = allocation.map(a => `
             <div class="holding-card" title="${a.name}" style="flex-grow: 1;">
                 <div class="holding-card__header">
                     <div class="holding-card__ticker" style="font-weight: 700;">${a.ticker}</div>
-                    <div class="holding-card__weight">${(a.weight * 100).toFixed(0)}%</div>
+                    <div class="holding-card__weight">${(a.weight * 100).toFixed(a.weight < 1.0 ? 1 : 0)}%</div>
                 </div>
                 <div class="holding-card__name">${a.name}</div>
                 <div class="holding-card__bar" style="background:${a.color}; width:100%;"></div>
