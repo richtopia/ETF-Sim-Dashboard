@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  etf-dashboard:
+    environment:
+    - VIRTUAL_HOST=test1.richschuster.com
+    - LETSENCRYPT_HOST=test1.richschuster.com
+    - LETSENCRYPT_EMAIL=junk@richschuster.com
+    image: nginx:alpine
+    container_name: etf-dashboard
+    restart: unless-stopped
+    volumes:
+      - ./dashboard:/usr/share/nginx/html:ro
+    networks:
+    - proxy-tier

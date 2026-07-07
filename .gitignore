@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+venv/
+ENV/
+env/
+.venv/
+
+# Data Cache
+cache/
+
+# Local configuration / IDEs
+.idea/
+.vscode/
+.DS_Store
+*.log
+
+# Generated results
+dashboard/results.json
+dashboard/risk_kpi.json

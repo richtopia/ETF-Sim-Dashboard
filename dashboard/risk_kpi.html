@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Dedicated Risk KPI Dashboard. Brainstorm and visualize a multi-factor macroeconomic risk scorecard including VIX, MOVE, Yield Curve, Sahm labor rule, and WTI Crude.">
+    <title>Risk KPI Dashboard — ETF Backtesting Simulator</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="risk_styles.css">
+    <!-- Chart.js with time adapter -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Header -->
+        <header class="header">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; margin-bottom: 8px;">
+                <div>
+                    <h1 class="header__title">Macro-Financial Risk KPI</h1>
+                    <p class="header__subtitle">
+                        Brainstorming a Consolidated Market Risk Scoreboard from 5 key leading indicators
+                    </p>
+                </div>
+                <div>
+                    <div class="nav-links" style="display: flex; gap: 10px; align-items: center;">
+                        <a href="index.html" class="nav-btn" style="
+                            display: inline-flex;
+                            align-items: center;
+                            gap: 6px;
+                            padding: 8px 16px;
+                            background: rgba(255, 255, 255, 0.05);
+                            border: 1px solid rgba(255, 255, 255, 0.1);
+                            border-radius: 8px;
+                            color: #a1a1aa;
+                            text-decoration: none;
+                            font-weight: 500;
+                            font-size: 0.9rem;
+                            transition: all 0.2s ease;
+                        " onmouseover="this.style.background='rgba(255, 255, 255, 0.1)'; this.style.color='#fff';" onmouseout="this.style.background='rgba(255, 255, 255, 0.05)'; this.style.color='#a1a1aa';">
+                            ETF Simulator
+                        </a>
+                        <a href="risk_kpi.html" class="nav-btn" style="
+                            display: inline-flex;
+                            align-items: center;
+                            gap: 6px;
+                            padding: 8px 16px;
+                            background: rgba(236, 72, 153, 0.2);
+                            border: 1px solid rgba(236, 72, 153, 0.4);
+                            border-radius: 8px;
+                            color: #ffffff;
+                            text-decoration: none;
+                            font-weight: 500;
+                            font-size: 0.9rem;
+                            transition: all 0.2s ease;
+                        ">
+                            Risk KPI Dashboard
+                        </a>
+                        <a href="definitions.html" class="nav-btn" style="
+                            display: inline-flex;
+                            align-items: center;
+                            gap: 6px;
+                            padding: 8px 16px;
+                            background: rgba(255, 255, 255, 0.05);
+                            border: 1px solid rgba(255, 255, 255, 0.1);
+                            border-radius: 8px;
+                            color: #a1a1aa;
+                            text-decoration: none;
+                            font-weight: 500;
+                            font-size: 0.9rem;
+                            transition: all 0.2s ease;
+                        " onmouseover="this.style.background='rgba(255, 255, 255, 0.1)'; this.style.color='#fff';" onmouseout="this.style.background='rgba(255, 255, 255, 0.05)'; this.style.color='#a1a1aa';">
+                            Strategy Definitions
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="header__meta">
+                <div class="header__meta-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                    Period: <span class="header__meta-value" id="kpi-meta-period">2004-01-01 to 2026-04-01</span>
+                </div>
+                <div class="header__meta-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    Frequency: <span class="header__meta-value">Daily Time Series</span>
+                </div>
+                <div class="header__meta-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                    Inputs: <span class="header__meta-value">5 Indicators Normalised [0-100]</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Current Scores Bar -->
+        <div id="kpi-stats-bar" class="kpi-stats-bar">
+            <!-- Dynamically populated by risk_app.js -->
+        </div>
+
+        <!-- Main Content Grid -->
+        <main class="kpi-main">
+            <!-- Left Panel: Line Visibility Controls & Parameters Description -->
+            <section class="kpi-sidebar">
+                <div class="kpi-panel">
+                    <h3 class="panel-title">KPI Visibility</h3>
+                    <div class="kpi-toggles" id="kpi-toggles-container">
+                        <!-- Filled by JS -->
+                    </div>
+                </div>
+
+                <div class="kpi-panel">
+                    <h3 class="panel-title">Indicator Guide</h3>
+                    <div class="indicator-guide-list">
+                        <div class="guide-item" style="border-left-color: #ec4899;">
+                            <div class="guide-item__name">Consolidated Risk Score (Weight: 100%)</div>
+                            <div class="guide-item__desc">The weighted index combining all 6 normalized factors: Sahm (15%), MOVE (20%), Trend (20%), Yield Curve (15%), Fed Funds (20%), and Oil (10%). Score &gt; 65 marks regime shift to full Risk-Off.</div>
+                        </div>
+                        <div class="guide-item" style="border-left-color: #8b5cf6;">
+                            <div class="guide-item__name">Fed Funds 12M Change (Weight: 20%)</div>
+                            <div class="guide-item__desc">Monetary tightness gauge. Rapid policy tightening of &ge; 2.50% over a 12-month span exhausts market liquidity and impacts stock valuations.</div>
+                        </div>
+                        <div class="guide-item" style="border-left-color: #6366f1;">
+                            <div class="guide-item__name">MOVE Index (Weight: 20%)</div>
+                            <div class="guide-item__desc">Implied volatility of US Treasury options (the bond market's VIX). Readings above 120 indicate severe liquidity stress in credit markets, which cascades into stock corrections.</div>
+                        </div>
+                        <div class="guide-item" style="border-left-color: #a1a1aa;">
+                            <div class="guide-item__name">Trend Momentum (Weight: 20%)</div>
+                            <div class="guide-item__desc">Measures how far the S&P 500 price has fallen below its 200-day Simple Moving Average (SMA). Price trading above the SMA represents 0% risk; risk scales to 100% if the index drops &ge; 10% below it.</div>
+                        </div>
+                        <div class="guide-item" style="border-left-color: #f59e0b;">
+                            <div class="guide-item__name">Yield Curve Inversion (Weight: 15%)</div>
+                            <div class="guide-item__desc">Checks for yield spread inversion (T10Y2Y &le; 0). Inversions represent forward macroeconomic expectations of economic slowdown.</div>
+                        </div>
+                        <div class="guide-item" style="border-left-color: #10b981;">
+                            <div class="guide-item__name">Sahm Rule Indicator (Weight: 15%)</div>
+                            <div class="guide-item__desc">Recession warning triggers when the 3-month moving average of national unemployment rises by &ge; 0.50% from its 12-month low. Unbelievably accurate coincident recession indicator.</div>
+                        </div>
+                        <div class="guide-item" style="border-left-color: #06b6d4;">
+                            <div class="guide-item__name">Oil Price Shock (Weight: 10%)</div>
+                            <div class="guide-item__desc">Exogenous inflationary supply-shock stress. Measures the 12-month percentage increase in WTI crude oil. Price increases exceeding +15% begin scaling risk, capping at +50%.</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right Panel: Time Series Chart & Time Period Filters -->
+            <section class="kpi-content">
+                <!-- Controls Card -->
+                <div class="card">
+                    <div class="chart-header">
+                        <h2 class="chart-header__title" style="display: flex; align-items: center; gap: 8px;">
+                            Macro Risk Indicator Trends
+                        </h2>
+                        <div class="chart-header__actions">
+                            <div class="date-inputs">
+                                <div class="date-input-group">
+                                    <label for="kpi-start-date">Start</label>
+                                    <input type="date" id="kpi-start-date">
+                                </div>
+                                <div class="date-input-group">
+                                    <label for="kpi-end-date">End</label>
+                                    <input type="date" id="kpi-end-date">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Presets Panel -->
+                    <div class="presets-panel" style="margin-top: 12px; margin-bottom: 12px;">
+                        <button class="preset-btn" data-start="2007-06-01" data-end="2009-12-31">2008 Crisis</button>
+                        <button class="preset-btn" data-start="2011-01-01" data-end="2012-12-31">Euro Crisis</button>
+                        <button class="preset-btn" data-start="2013-01-01" data-end="2019-12-31">Rise of FAANG</button>
+                        <button class="preset-btn" data-start="2016-06-01" data-end="2017-06-30">Brexit Vote</button>
+                        <button class="preset-btn" data-start="2020-01-01" data-end="2021-12-31">COVID-19</button>
+                        <button class="preset-btn" data-start="2022-11-01" data-end="2026-04-01">AI Bubble</button>
+                        <button class="preset-btn active" id="kpi-reset-range">Max Range</button>
+                    </div>
+
+                    <!-- Chart Container -->
+                    <div class="chart-container" style="height: 500px; position: relative;">
+                        <canvas id="risk-chart"></canvas>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>
+                Risk KPI Dashboard — Macroeconomic backtest sandbox for educational purposes. 
+                Data points compiled from St. Louis FRED and Yahoo Finance.
+            </p>
+        </footer>
+    </div>
+
+    <script src="risk_app.js"></script>
+</body>
+</html>

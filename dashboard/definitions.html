@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ETF Strategy Definitions - Simulator</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- CSS Layout -->
+    <link rel="stylesheet" href="risk_styles.css">
+    
+    <style>
+        .definitions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+            margin-top: 24px;
+            width: 100%;
+        }
+
+        .definition-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 24px;
+            box-shadow: var(--shadow-card);
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            border-top: 3px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .definition-card:hover {
+            background: var(--bg-card-hover);
+            transform: translateY(-3px);
+        }
+
+        .definition-card__header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .definition-card__name {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-bright);
+        }
+
+        .definition-card__badge {
+            font-size: 0.675rem;
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+
+        .definition-card__formula {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border-subtle);
+            padding-bottom: 10px;
+            margin-bottom: 4px;
+        }
+
+        .definition-card__desc {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            flex-grow: 1;
+        }
+
+        .definition-card__logic {
+            font-size: 0.825rem;
+            color: var(--text-muted);
+            line-height: 1.45;
+            background: rgba(255, 255, 255, 0.015);
+            border: 1px dashed rgba(255, 255, 255, 0.08);
+            border-radius: var(--radius-sm);
+            padding: 12px;
+            margin-top: 6px;
+        }
+
+        .logic-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .logic-text {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.775rem;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <div class="kpi-container">
+        <!-- Header Section -->
+        <header class="kpi-header">
+            <div class="header-main-row">
+                <div>
+                    <h1 class="header__title">ETF Strategy Definitions</h1>
+                    <p class="header__subtitle">
+                        Comprehensive glossary of selection logic, weighting rules, and risk regimes
+                    </p>
+                </div>
+                <div>
+                    <div class="nav-links" style="display: flex; gap: 10px; align-items: center;">
+                        <a href="index.html" class="nav-btn" style="
+                            display: inline-flex;
+                            align-items: center;
+                            gap: 6px;
+                            padding: 8px 16px;
+                            background: rgba(255, 255, 255, 0.05);
+                            border: 1px solid rgba(255, 255, 255, 0.1);
+                            border-radius: 8px;
+                            color: #a1a1aa;
+                            text-decoration: none;
+                            font-weight: 500;
+                            font-size: 0.9rem;
+                            transition: all 0.2s ease;
+                        " onmouseover="this.style.background='rgba(255, 255, 255, 0.1)'; this.style.color='#fff';" onmouseout="this.style.background='rgba(255, 255, 255, 0.05)'; this.style.color='#a1a1aa';">
+                            ETF Simulator
+                        </a>
+                        <a href="risk_kpi.html" class="nav-btn" style="
+                            display: inline-flex;
+                            align-items: center;
+                            gap: 6px;
+                            padding: 8px 16px;
+                            background: rgba(255, 255, 255, 0.05);
+                            border: 1px solid rgba(255, 255, 255, 0.1);
+                            border-radius: 8px;
+                            color: #a1a1aa;
+                            text-decoration: none;
+                            font-weight: 500;
+                            font-size: 0.9rem;
+                            transition: all 0.2s ease;
+                        " onmouseover="this.style.background='rgba(255, 255, 255, 0.1)'; this.style.color='#fff';" onmouseout="this.style.background='rgba(255, 255, 255, 0.05)'; this.style.color='#a1a1aa';">
+                            Risk KPI Dashboard
+                        </a>
+                        <a href="definitions.html" class="nav-btn" style="
+                            display: inline-flex;
+                            align-items: center;
+                            gap: 6px;
+                            padding: 8px 16px;
+                            background: rgba(14, 165, 233, 0.2);
+                            border: 1px solid rgba(14, 165, 233, 0.4);
+                            border-radius: 8px;
+                            color: #ffffff;
+                            text-decoration: none;
+                            font-weight: 500;
+                            font-size: 0.9rem;
+                            transition: all 0.2s ease;
+                        ">
+                            Strategy Definitions
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main style="margin-top: 10px; width: 100%;">
+            <div class="definitions-grid" id="definitions-grid">
+                <!-- Dynamically populated -->
+            </div>
+        </main>
+    </div>
+
+    <!-- Script to load results.json and render definitions -->
+    <script>
+        const LOGIC_DEFINITIONS = {
+            "MAG 10": {
+                formula: "Equal Weighted, Top 10 by Market Cap",
+                logic: "Rebalances monthly. Selects the 10 largest primary share class S&P 500 constituents based on trailing market capitalization. Grouped share classes (e.g. GOOG/GOOGL) are aggregated.",
+                color: "#6366f1"
+            },
+            "Mag 10 EAFE": {
+                formula: "Equal Weighted, Top 10 by Market Cap (EAFE)",
+                logic: "Rebalances monthly. Selects the 10 largest companies in the MSCI EAFE index (Europe, Australasia, Far East developed markets) and weights them equally.",
+                color: "#06b6d4"
+            },
+            "Mag 10 EEM": {
+                formula: "Equal Weighted, Top 10 by Market Cap (EM)",
+                logic: "Rebalances monthly. Selects the 10 largest companies in the MSCI Emerging Markets index (EM) and weights them equally.",
+                color: "#f59e0b"
+            },
+            "MAG 10 Annual": {
+                formula: "Equal Weighted, Top 10 by Market Cap (Annual)",
+                logic: "Rebalances every 13 months (to safely satisfy long-term capital gains tax holding periods). Selects the 10 largest companies in the S&P 500 and weights them equally.",
+                color: "#6366f1"
+            },
+            "Mag 10 EAFE Annual": {
+                formula: "Equal Weighted, Top 10 by Market Cap (EAFE, Annual)",
+                logic: "Rebalances every 13 months. Selects the 10 largest companies in the MSCI EAFE developed markets index and weights them equally.",
+                color: "#06b6d4"
+            },
+            "Mag 10 EEM Annual": {
+                formula: "Equal Weighted, Top 10 by Market Cap (EM, Annual)",
+                logic: "Rebalances every 13 months. Selects the 10 largest companies in the MSCI Emerging Markets index and weights them equally.",
+                color: "#f59e0b"
+            },
+            "Ult-Yield": {
+                formula: "Risk-On (Momentum + Market Cap) vs. Risk-Off (Low Vol + Dividend Yield)",
+                logic: "Rebalances monthly. Monitors the FRED 10Y-2Y Treasury Yield Spread. If T10Y2Y <= 0 (inverted curve), selects 5 Low Volatility + 5 High Dividend stocks (Risk-Off). Otherwise, selects 5 Momentum + 5 Market Cap stocks (Risk-On).",
+                color: "#f59e0b"
+            },
+            "Ult-VIX": {
+                formula: "Risk-On (Momentum + Market Cap) vs. Risk-Off (Low Vol + Dividend Yield)",
+                logic: "Rebalances monthly. Monitors the VIX Index. If VIX > 20 (high equity volatility), selects the 5 Low Vol + 5 High Dividend defensive portfolio. Otherwise, selects the 5 Momentum + 5 Market Cap growth portfolio.",
+                color: "#ec4899"
+            },
+            "Ult-200SMA": {
+                formula: "Risk-On (Momentum + Market Cap) vs. Risk-Off (Low Vol + Dividend Yield)",
+                logic: "Rebalances monthly. Monitors the S&P 500 Index closing price relative to its 200-day Simple Moving Average (SMA). If the price is below the SMA (bearish trend), shifts to the 10-stock defensive portfolio. Otherwise, remains in the 10-stock growth portfolio.",
+                color: "#10b981"
+            },
+            "Ult-RiskKPI": {
+                formula: "Risk-On (Momentum + Market Cap) vs. Risk-Off (Low Vol + Dividend Yield)",
+                logic: "Rebalances monthly. Monitors the Consolidated Risk Score (weighted index of Sahm, MOVE, SMA, Yield Curve, Fed Rates, WTI Oil). If the Risk Score >= 50, shifts to the 10-stock defensive portfolio. Otherwise, remains in the 10-stock growth portfolio.",
+                color: "#8b5cf6"
+            },
+            "Ult-Hybrid": {
+                formula: "Dynamic 3-Regime Allocation + 200-SMA Emergency Brake",
+                logic: "Rebalances monthly. If S&P 500 Index < 200-day SMA, triggers emergency 100% Defensive allocation. Otherwise, dynamically scales allocation based on the Consolidated Risk Score: <40 = 100% Growth, 40-60 = 50% Growth / 50% Defensive, >60 = 100% Defensive.",
+                color: "#0ea5e9"
+            }
+        };
+
+        document.addEventListener("DOMContentLoaded", async () => {
+            try {
+                const response = await fetch("results.json");
+                const data = await response.json();
+                
+                renderDefinitions(data.etfs);
+            } catch (err) {
+                console.error("Failed to load definitions data:", err);
+                document.getElementById("definitions-grid").innerHTML = `
+                    <div style="grid-column: 1/-1; text-align: center; color: var(--text-secondary); padding: 40px;">
+                        Failed to load ETF definitions from results.json. Run backtests first.
+                    </div>
+                `;
+            }
+        });
+
+        function renderDefinitions(etfs) {
+            const grid = document.getElementById("definitions-grid");
+            
+            grid.innerHTML = etfs.map(etf => {
+                const def = LOGIC_DEFINITIONS[etf.name] || {
+                    formula: "Custom Portfolio Rule",
+                    logic: `Selection rule: ${etf.selection_rule}, Weighting: ${etf.weighting}`,
+                    color: "#64748b"
+                };
+
+                return `
+                    <div class="definition-card" style="border-top-color: ${def.color}">
+                        <div class="definition-card__header">
+                            <h3 class="definition-card__name">${etf.name}</h3>
+                            <span class="definition-card__badge">${etf.universe}</span>
+                        </div>
+                        <div class="definition-card__formula">${def.formula}</div>
+                        <p class="definition-card__desc">${etf.description}</p>
+                        
+                        <div class="definition-card__logic">
+                            <div class="logic-title">Execution Logic</div>
+                            <div class="logic-text">${def.logic}</div>
+                        </div>
+                    </div>
+                `;
+            }).join("");
+        }
+    </script>
+</body>
+</html>

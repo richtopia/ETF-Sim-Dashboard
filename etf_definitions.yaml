@@ -1,0 +1,109 @@
+# ETF Backtesting Simulator - Hypothetical ETF Definitions
+# Each ETF defines rules for stock selection and weighting.
+# The backtesting engine reads this file to construct and rebalance portfolios.
+
+etfs:
+  - name: "MAG 10"
+    description: "Top 10 largest S&P 500 companies, equal weighted"
+    universe: "sp500"
+    selection_rule: "top_n_by_market_cap"
+    n: 10
+    weighting: "equal"
+    rebalance_frequency: "monthly"
+
+  - name: "Mag 10 EAFE"
+    description: "Top 10 largest EAFE (EFA) companies, equal weighted"
+    universe: "efa"
+    selection_rule: "top_n_by_market_cap"
+    n: 10
+    weighting: "equal"
+    rebalance_frequency: "monthly"
+
+  - name: "Mag 10 EEM"
+    description: "Top 10 largest Emerging Markets (EEM) companies, equal weighted"
+    universe: "eem"
+    selection_rule: "top_n_by_market_cap"
+    n: 10
+    weighting: "equal"
+    rebalance_frequency: "monthly"
+
+
+  - name: "MAG 10 Annual"
+    description: "Top 10 largest S&P 500 companies, equal weighted"
+    universe: "sp500"
+    selection_rule: "top_n_by_market_cap"
+    n: 10
+    weighting: "equal"
+    rebalance_frequency: "13_months"
+
+  - name: "Mag 10 EAFE Annual"
+    description: "Top 10 largest EAFE (EFA) companies, equal weighted"
+    universe: "efa"
+    selection_rule: "top_n_by_market_cap"
+    n: 10
+    weighting: "equal"
+    rebalance_frequency: "13_months"
+
+  - name: "Mag 10 EEM Annual"
+    description: "Top 10 largest Emerging Markets (EEM) companies, equal weighted"
+    universe: "eem"
+    selection_rule: "top_n_by_market_cap"
+    n: 10
+    weighting: "equal"
+    rebalance_frequency: "13_months"
+
+  - name: "Ult-Yield"
+    description: "Momentum/MC in normal market, Low Vol/High Dividend in risk-off (T10Y2Y <= 0)"
+    universe: "sp500"
+    selection_rule: "ult_yield"
+    n: 10
+    weighting: "equal"
+    rebalance_frequency: "monthly"
+
+  - name: "Ult-VIX"
+    description: "Momentum/MC in normal market, Low Vol/High Dividend in risk-off (VIX > 20)"
+    universe: "sp500"
+    selection_rule: "ult_vix"
+    n: 10
+    weighting: "equal"
+    rebalance_frequency: "monthly"
+
+  - name: "Ult-200SMA"
+    description: "Momentum/MC in normal market, Low Vol/High Dividend in risk-off (SPY < 200-day SMA)"
+    universe: "sp500"
+    selection_rule: "ult_200sma"
+    n: 10
+    weighting: "equal"
+    rebalance_frequency: "monthly"
+
+  - name: "Ult-RiskKPI"
+    description: "Momentum/MC in normal market, Low Vol/High Dividend in risk-off (Consolidated Risk Score >= 50)"
+    universe: "sp500"
+    selection_rule: "ult_riskkpi"
+    n: 10
+    weighting: "equal"
+    rebalance_frequency: "monthly"
+
+  - name: "Ult-Hybrid"
+    description: "Scaled exposure (Growth/Balanced/Defensive) based on Risk Score + 200SMA emergency brake"
+    universe: "sp500"
+    selection_rule: "ult_hybrid"
+    n: 10
+    weighting: "equal"
+    rebalance_frequency: "monthly"
+
+
+
+benchmarks:
+  - ticker: "SPY"
+    name: "S&P 500 (SPY)"
+  - ticker: "EFA"
+    name: "MSCI EAFE (EFA)"
+  - ticker: "EEM"
+    name: "MSCI EM (EEM)"
+  - ticker: "VT"
+    name: "Total World (VT)"
+  - ticker: "OEF"
+    name: "S&P 100 (OEF)"
+  - ticker: "IAU"
+    name: "Gold Trust (IAU)"
