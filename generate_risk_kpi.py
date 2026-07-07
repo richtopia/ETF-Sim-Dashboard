@@ -42,6 +42,10 @@ def main():
         sahm = download_fred("SAHMREALTIME")
         dff = download_fred("DFF")
         wti = download_fred("DCOILWTICO")
+        
+        # Download Trade Weighted USD Index Data
+        dtwexbgs = download_fred("DTWEXBGS")       # Active Broad Index (starts 2006)
+        dtwexm = download_fred("DTWEXM")           # Discontinued Major Currencies Index (starts 1973)
     except Exception as e:
         logger.error(f"Error downloading from FRED: {e}")
         return
@@ -81,6 +85,34 @@ def main():
     wti = wti.reindex(idx).ffill().bfill()
     move = move.reindex(idx).ffill().bfill()
     spy = spy.reindex(idx).ffill().bfill()
+    
+    # Stitch Trade Weighted USD Index back to 2003
+    dtwexbgs = dtwexbgs.reindex(idx)
+    dtwexm = dtwexm.reindex(idx)
+    
+    # Scale DTWEXM to match DTWEXBGS at first overlapping point in 2006
+    common_dates = dtwexbgs.dropna().index.intersection(dtwexm.dropna().index)
+    if not common_dates.empty:
+        align_date = common_dates[0]
+        scale_factor = dtwexbgs.loc[align_date]["DTWEXBGS"] / dtwexm.loc[align_date]["DTWEXM"]
+        dtwexm_scaled = dtwexm * scale_factor
+    else:
+        dtwexm_scaled = dtwexm * 1.18
+        
+    usd_stitched = pd.DataFrame(index=idx, columns=["USD"])
+    for date in idx:
+        if date >= pd.Timestamp("2006-01-02"):
+            val = dtwexbgs.loc[date]["DTWEXBGS"]
+            if pd.isna(val):
+                val = dtwexbgs.loc[:date].ffill().iloc[-1]["DTWEXBGS"] if not dtwexbgs.loc[:date].dropna().empty else 100.0
+            usd_stitched.loc[date, "USD"] = val
+        else:
+            val = dtwexm_scaled.loc[date]["DTWEXM"]
+            if pd.isna(val):
+                val = dtwexm_scaled.loc[:date].ffill().iloc[-1]["DTWEXM"] if not dtwexm_scaled.loc[:date].dropna().empty else 100.0
+            usd_stitched.loc[date, "USD"] = val
+            
+    usd_stitched = usd_stitched.ffill().bfill()
 
     # Create merged DataFrame
     df = pd.DataFrame(index=idx)
@@ -90,10 +122,13 @@ def main():
     df["WTI"] = wti["DCOILWTICO"]
     df["MOVE"] = move["MOVE"]
     df["SPY"] = spy["SPY"]
+    df["USD"] = usd_stitched["USD"].astype(float)
 
     # 4. Calculate 12-month changes and 200 SMA
     logger.info("Computing sub-component metrics...")
     df["SPY_200SMA"] = df["SPY"].rolling(window=200).mean()
+    df["USD_200SMA"] = df["USD"].rolling(window=200).mean()
+    
     # Fed Funds 12m change (in percentage points)
     df["DFF_12m_change"] = df["DFF"] - df["DFF"].shift(365)
     
@@ -126,15 +161,20 @@ def main():
     df["I_Trend"] = (df["SPY_200SMA"] - df["SPY"]) / (df["SPY_200SMA"] * 0.10) * 100.0
     df["I_Trend"] = df["I_Trend"].clip(lower=0.0, upper=100.0)
 
+    # US Dollar Index Trend (0% risk if at/below 200 SMA, scaling to 100% risk if 8% or more above 200 SMA)
+    df["I_USD"] = (df["USD"] - df["USD_200SMA"]) / (df["USD_200SMA"] * 0.08) * 100.0
+    df["I_USD"] = df["I_USD"].clip(lower=0.0, upper=100.0)
+
     # 6. Compute Consolidated Risk Score
-    # Sahm (15%), MOVE (20%), Trend (20%), Yield Curve (15%), Fed Funds (20%), Oil (10%)
+    # Sahm (15%), MOVE (15%), Trend (20%), Yield Curve (15%), Fed Funds (15%), Oil (10%), USD (10%)
     df["Composite"] = (
         0.15 * df["I_Sahm"] +
-        0.20 * df["I_MOVE"] +
+        0.15 * df["I_MOVE"] +
         0.20 * df["I_Trend"] +
         0.15 * df["I_Yield"] +
-        0.20 * df["I_Fed"] +
-        0.10 * df["I_Oil"]
+        0.15 * df["I_Fed"] +
+        0.10 * df["I_Oil"] +
+        0.10 * df["I_USD"]
     )
 
     # 7. Format output for JSON
@@ -153,7 +193,8 @@ def main():
             "move": df["I_MOVE"].tolist(),
             "fed": df["I_Fed"].tolist(),
             "oil": df["I_Oil"].tolist(),
-            "trend": df["I_Trend"].tolist()
+            "trend": df["I_Trend"].tolist(),
+            "usd": df["I_USD"].tolist()
         },
         "raw": {
             "t10y2y": df["T10Y2Y"].tolist(),
@@ -161,7 +202,8 @@ def main():
             "move_value": df["MOVE"].tolist(),
             "dff": df["DFF"].tolist(),
             "wti": df["WTI"].tolist(),
-            "spy": df["SPY"].tolist()
+            "spy": df["SPY"].tolist(),
+            "usd_value": df["USD"].tolist()
         }
     }
 

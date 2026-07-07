@@ -15,6 +15,7 @@ const LINE_STYLES = [
     { key: "yield", label: "Yield Curve Inversion", color: "#f59e0b", width: 2, active: false },
     { key: "sahm", label: "Sahm Rule (Labor)", color: "#10b981", width: 2, active: false },
     { key: "oil", label: "Oil Price Shock", color: "#06b6d4", width: 2, active: false },
+    { key: "usd", label: "US Dollar Index (DXY)", color: "#a855f7", width: 2, active: false },
     { key: "spy", label: "S&P 500 Index (RHS)", color: "rgba(255, 255, 255, 0.45)", width: 1.5, active: true, yAxisID: "y2" }
 ];
 
@@ -155,6 +156,7 @@ function getFilteredData(startDateStr, endDateStr) {
         yield: [],
         fed: [],
         oil: [],
+        usd: [],
         spy: []
     };
 
@@ -166,6 +168,7 @@ function getFilteredData(startDateStr, endDateStr) {
         datasetMap.yield.push(RAW_DATA.components.yield[idx]);
         datasetMap.fed.push(RAW_DATA.components.fed[idx]);
         datasetMap.oil.push(RAW_DATA.components.oil[idx]);
+        datasetMap.usd.push(RAW_DATA.components.usd[idx]);
         datasetMap.spy.push(RAW_DATA.raw.spy[idx]);
     });
 
@@ -315,12 +318,13 @@ function renderStatsBar() {
 
     const statsConfig = [
         { label: "Consolidated Risk", val: RAW_DATA.composite[latestIdx], color: "#ec4899", suffix: "", weight: "100%" },
-        { label: "Fed Funds (12M Δ)", val: RAW_DATA.components.fed[latestIdx], color: "#8b5cf6", suffix: "", weight: "20% wt" },
-        { label: "MOVE Index", val: RAW_DATA.components.move[latestIdx], color: "#6366f1", suffix: "", weight: "20% wt" },
+        { label: "Fed Funds (12M Δ)", val: RAW_DATA.components.fed[latestIdx], color: "#8b5cf6", suffix: "", weight: "15% wt" },
+        { label: "MOVE Index", val: RAW_DATA.components.move[latestIdx], color: "#6366f1", suffix: "", weight: "15% wt" },
         { label: "Trend (vs SMA)", val: RAW_DATA.components.trend[latestIdx], color: "#a1a1aa", suffix: "", weight: "20% wt" },
         { label: "Yield Inversion", val: RAW_DATA.components.yield[latestIdx], color: "#f59e0b", suffix: "", weight: "15% wt" },
         { label: "Sahm Rule", val: RAW_DATA.components.sahm[latestIdx], color: "#10b981", suffix: "", weight: "15% wt" },
         { label: "Oil Price Shock", val: RAW_DATA.components.oil[latestIdx], color: "#06b6d4", suffix: "", weight: "10% wt" },
+        { label: "US Dollar Index", val: RAW_DATA.components.usd[latestIdx], color: "#a855f7", suffix: "", weight: "10% wt" },
         { label: "S&P 500 Price", val: RAW_DATA.raw.spy[latestIdx], color: "#ffffff", suffix: "$", weight: "RHS Index" }
     ];
 
