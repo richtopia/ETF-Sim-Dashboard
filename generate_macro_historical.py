@@ -98,6 +98,7 @@ def main():
     dtb3 = fetch_fred_csv("DTB3")               # Daily 3-Month T-Bill Yield (starts 1954)
     dgs10 = fetch_fred_csv("DGS10")             # Daily 10-Year Treasury Yield (starts 1962)
     unrate = fetch_fred_csv("UNRATE")           # Monthly Unemployment Rate (starts 1948)
+    usrec = fetch_fred_csv("USREC")             # NBER Recession indicator (starts 1854)
 
     # 2. Fetch Gold Historical series
     gold_monthly = fetch_gold_historical()
@@ -119,6 +120,7 @@ def main():
     dtb3 = dtb3.reindex(all_dates).ffill()
     dgs10 = dgs10.reindex(all_dates).ffill()
     gold_monthly = gold_monthly.reindex(all_dates).ffill().bfill()
+    usrec = usrec.reindex(all_dates).ffill().fillna(0).astype(int)
 
     # 4. Build Gold Spot Index (fixed at $35/oz before 1968-12-30)
     logger.info("Building Gold return index...")
@@ -297,6 +299,7 @@ def main():
     
     payload = {
         "dates": dates_str,
+        "recessions": usrec.tolist(),
         "assets": {
             "equity": equity_index.tolist(),
             "gold": gold_index.tolist(),

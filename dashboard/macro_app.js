@@ -198,6 +198,72 @@
         return result;
     }
 
+    // Custom Chart.js Plugin to draw NBER recessions shading
+    const recessionPlugin = {
+        id: 'recessions',
+        beforeDraw: (chart) => {
+            if (!DATA || !DATA.recessions || !chart.chartArea) return;
+            
+            const ctx = chart.ctx;
+            const xAxis = chart.scales.x;
+            
+            // Find sliced date indexes based on date inputs
+            const dates = DATA.dates;
+            const startDateStr = document.getElementById("start-date-input").value;
+            const endDateStr = document.getElementById("end-date-input").value;
+            
+            let startIdx = dates.findIndex(d => d >= startDateStr);
+            let endIdx = dates.findIndex(d => d >= endDateStr);
+            if (startIdx === -1) startIdx = 0;
+            if (endIdx === -1 || endIdx < startIdx) endIdx = dates.length - 1;
+            
+            // Compute periods
+            const periods = [];
+            let inRec = false;
+            let startVal = null;
+            
+            for (let idx = startIdx; idx <= endIdx; idx++) {
+                const isRec = DATA.recessions[idx] === 1;
+                const dVal = new Date(dates[idx]);
+                
+                if (isRec && !inRec) {
+                    inRec = true;
+                    startVal = dVal;
+                } else if (!isRec && inRec) {
+                    inRec = false;
+                    periods.push({ start: startVal, end: dVal });
+                }
+            }
+            if (inRec) {
+                periods.push({ start: startVal, end: new Date(dates[endIdx]) });
+            }
+            
+            // Draw bands
+            ctx.save();
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.045)'; // Subtle NBER shading in dark mode
+            
+            periods.forEach(p => {
+                const xStart = xAxis.getPixelForValue(p.start);
+                const xEnd = xAxis.getPixelForValue(p.end);
+                
+                // Keep inside chart boundaries
+                const xLeft = Math.max(chart.chartArea.left, xStart);
+                const xRight = Math.min(chart.chartArea.right, xEnd);
+                
+                if (xRight > xLeft) {
+                    ctx.fillRect(
+                        xLeft, 
+                        chart.chartArea.top, 
+                        xRight - xLeft, 
+                        chart.chartArea.bottom - chart.chartArea.top
+                    );
+                }
+            });
+            ctx.restore();
+        }
+    };
+
+
     function renderPerformanceChart(slicedDates, startIdx, endIdx) {
         const ctx = document.getElementById("performance-chart").getContext("2d");
         
@@ -244,6 +310,7 @@
         performanceChart = new Chart(ctx, {
             type: 'line',
             data: { datasets },
+            plugins: [recessionPlugin],
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
@@ -335,6 +402,7 @@
                     }
                 ]
             },
+            plugins: [recessionPlugin],
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
