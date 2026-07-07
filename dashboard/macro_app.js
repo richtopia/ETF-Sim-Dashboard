@@ -89,6 +89,8 @@
             checkboxIds.forEach(id => {
                 document.getElementById(id).addEventListener("change", updateDashboard);
             });
+
+            document.getElementById("metrics-filter-select").addEventListener("change", () => renderMetrics());
             
             // Render first time
             updateDashboard();
@@ -136,6 +138,11 @@
         // Render charts
         renderPerformanceChart(slicedDates, startIdx, endIdx);
         renderScoreChart(slicedDates, startIdx, endIdx);
+        
+        // Render new sub-panels
+        renderMetrics();
+        renderHoldingsInspector();
+        renderHeatmap();
     }
 
     function calculateAndRenderMetrics(startIdx, endIdx) {
@@ -467,4 +474,399 @@
                 }
             }
         });
+    }
+
+    // ================================================================
+    // Holdings Inspector
+    // ================================================================
+    function renderHoldingsInspector() {
+        const controlsEl = document.getElementById("holdings-controls");
+        const gridEl = document.getElementById("holdings-grid");
+        if (!controlsEl || !gridEl) return;
+        
+        const items = [
+            { name: "200-SMA Switch (Gold)", key: "sma_gold" },
+            { name: "200-SMA Switch (Treasury)", key: "sma_treas" },
+            { name: "Macro Score (Gold)", key: "macro_gold" },
+            { name: "Macro Score (Treasury)", key: "macro_treas" }
+        ];
+        
+        if (!controlsEl.innerHTML) {
+            const options = items.map((it, i) => `<option value="${i}">${it.name}</option>`).join('');
+            controlsEl.innerHTML = `
+                <div class="control-group">
+                    <label>Select Portfolio</label>
+                    <select id="holdings-etf-select" style="background:var(--bg-input); border:1px solid var(--border-color); color:#fff; border-radius:6px; padding:6px; outline:none; font-family:'Inter',sans-serif; cursor:pointer;">${options}</select>
+                </div>
+                <div class="control-group slider-container" style="margin-left: 24px; flex-grow: 1;">
+                    <label>Select Rebalance Date</label>
+                    <input type="range" id="holdings-date-slider" min="0" max="100" value="0" style="width:100%;">
+                </div>
+                <div class="control-group" style="margin-left: 24px;">
+                    <label>Date</label>
+                    <div class="date-display" id="holdings-date-display" style="padding: 6px 12px; background:rgba(255,255,255,0.02); border:1px solid var(--border-color); border-radius:6px; font-family:'JetBrains Mono',monospace;">—</div>
+                </div>
+            `;
+            
+            document.getElementById("holdings-etf-select").addEventListener("change", () => setupHoldingsSlider());
+            document.getElementById("holdings-date-slider").addEventListener("input", () => updateHoldingsDisplay());
+        }
+        
+        setupHoldingsSlider();
+    }
+    
+    let activeRebalanceDates = [];
+    
+    function setupHoldingsSlider() {
+        const dates = DATA.dates;
+        const startDateStr = document.getElementById("custom-start-date").value;
+        const endDateStr = document.getElementById("custom-end-date").value;
+        
+        let startIdx = dates.findIndex(d => d >= startDateStr);
+        let endIdx = dates.findIndex(d => d >= endDateStr);
+        if (startIdx === -1) startIdx = 0;
+        if (endIdx === -1 || endIdx < startIdx) endIdx = dates.length - 1;
+        
+        activeRebalanceDates = [];
+        activeRebalanceDates.push(startIdx);
+        
+        for (let i = startIdx + 1; i <= endIdx; i++) {
+            const d = new Date(dates[i]);
+            const prevD = new Date(dates[i - 1]);
+            if (d.getMonth() !== prevD.getMonth()) {
+                activeRebalanceDates.push(i);
+            }
+        }
+        
+        const slider = document.getElementById("holdings-date-slider");
+        slider.max = Math.max(0, activeRebalanceDates.length - 1);
+        slider.value = 0;
+        
+        updateHoldingsDisplay();
+    }
+    
+    function updateHoldingsDisplay() {
+        const select = document.getElementById("holdings-etf-select");
+        const slider = document.getElementById("holdings-date-slider");
+        const gridEl = document.getElementById("holdings-grid");
+        if (!select || !slider || !gridEl || activeRebalanceDates.length === 0) return;
+        
+        const pIdx = parseInt(select.value);
+        const dateIdx = parseInt(slider.value);
+        const dataIdx = activeRebalanceDates[dateIdx];
+        
+        const dateStr = DATA.dates[dataIdx];
+        document.getElementById("holdings-date-display").textContent = dateStr;
+        
+        const smaState = DATA.indicators.sma_state[dataIdx];
+        const score = DATA.indicators.macro_score[dataIdx];
+        
+        let allocation = [];
+        if (pIdx === 0) { // sma_gold
+            if (smaState === 100) allocation = [{ ticker: "GOLD", name: "Gold Spot bullion", weight: 1.0, color: COLORS.gold.main }];
+            else allocation = [{ ticker: "EQUITY", name: "Equities Composite Index", weight: 1.0, color: COLORS.equity.main }];
+        } else if (pIdx === 1) { // sma_treas
+            if (smaState === 100) allocation = [{ ticker: "TREASURY", name: "10-Year U.S. Treasury Bond", weight: 1.0, color: COLORS.treasury.main }];
+            else allocation = [{ ticker: "EQUITY", name: "Equities Composite Index", weight: 1.0, color: COLORS.equity.main }];
+        } else if (pIdx === 2) { // macro_gold
+            if (score >= 50.0) allocation = [{ ticker: "GOLD", name: "Gold Spot bullion", weight: 1.0, color: COLORS.gold.main }];
+            else allocation = [{ ticker: "EQUITY", name: "Equities Composite Index", weight: 1.0, color: COLORS.equity.main }];
+        } else if (pIdx === 3) { // macro_treas
+            if (score >= 50.0) allocation = [{ ticker: "TREASURY", name: "10-Year U.S. Treasury Bond", weight: 1.0, color: COLORS.treasury.main }];
+            else allocation = [{ ticker: "EQUITY", name: "Equities Composite Index", weight: 1.0, color: COLORS.equity.main }];
+        }
+        
+        gridEl.innerHTML = allocation.map(a => `
+            <div class="holding-card" title="${a.name}" style="flex-grow: 1;">
+                <div class="holding-card__header">
+                    <div class="holding-card__ticker" style="font-weight: 700;">${a.ticker}</div>
+                    <div class="holding-card__weight">${(a.weight * 100).toFixed(0)}%</div>
+                </div>
+                <div class="holding-card__name">${a.name}</div>
+                <div class="holding-card__bar" style="background:${a.color}; width:100%;"></div>
+            </div>
+        `).join('');
+    }
+
+    // ================================================================
+    // Monthly Returns Heatmap
+    // ================================================================
+    function getMonthlyReturns(values, dates) {
+        const byYear = {};
+        const monthlyData = {};
+        for (let i = 0; i < dates.length; i++) {
+            const d = new Date(dates[i]);
+            const yr = d.getFullYear();
+            const m = d.getMonth() + 1;
+            
+            if (!monthlyData[yr]) monthlyData[yr] = {};
+            if (!monthlyData[yr][m]) monthlyData[yr][m] = [];
+            monthlyData[yr][m].push({ idx: i, val: values[i] });
+        }
+        
+        const years = Object.keys(monthlyData).sort((a,b) => a-b);
+        let prevMonthCloseVal = null;
+        
+        years.forEach(yr => {
+            byYear[yr] = {};
+            for (let m = 1; m <= 12; m++) {
+                const points = monthlyData[yr][m];
+                if (!points || points.length === 0) continue;
+                
+                const endVal = points[points.length - 1].val;
+                let startVal = prevMonthCloseVal;
+                if (startVal === null) {
+                    startVal = points[0].val;
+                }
+                
+                const ret = ((endVal - startVal) / startVal) * 100;
+                byYear[yr][m] = ret;
+                prevMonthCloseVal = endVal;
+            }
+        });
+        
+        return byYear;
+    }
+
+    function renderHeatmap() {
+        const controlsEl = document.getElementById("heatmap-controls");
+        const containerEl = document.getElementById("heatmap-container");
+        if (!controlsEl || !containerEl) return;
+        
+        const items = [
+            { name: "Equity Composite", data: DATA.assets.equity },
+            { name: "Gold Spot", data: DATA.assets.gold },
+            { name: "U.S. Treasuries", data: DATA.assets.treasury },
+            { name: "200-SMA Switch (Gold)", data: DATA.portfolios.sma_gold },
+            { name: "200-SMA Switch (Treasury)", data: DATA.portfolios.sma_treas },
+            { name: "Macro Score (Gold)", data: DATA.portfolios.macro_gold },
+            { name: "Macro Score (Treasury)", data: DATA.portfolios.macro_treas }
+        ];
+        
+        if (!controlsEl.innerHTML) {
+            const options = items.map((it, i) => `<option value="${i}">${it.name}</option>`).join('');
+            const compareOptions = `<option value="-1">None (Absolute Returns)</option>` + options;
+            
+            controlsEl.innerHTML = `
+                <div class="control-group">
+                    <label>Select Fund</label>
+                    <select id="heatmap-select" style="background:var(--bg-input); border:1px solid var(--border-color); color:#fff; border-radius:6px; padding:6px; outline:none; font-family:'Inter',sans-serif; cursor:pointer;">${options}</select>
+                </div>
+                <div class="control-group" style="margin-left: 16px;">
+                    <label>Compare To</label>
+                    <select id="heatmap-compare-select" style="background:var(--bg-input); border:1px solid var(--border-color); color:#fff; border-radius:6px; padding:6px; outline:none; font-family:'Inter',sans-serif; cursor:pointer;">${compareOptions}</select>
+                </div>
+            `;
+            
+            document.getElementById("heatmap-select").addEventListener("change", () => renderHeatmapTable());
+            document.getElementById("heatmap-compare-select").addEventListener("change", () => renderHeatmapTable());
+        }
+        
+        renderHeatmapTable();
+    }
+    
+    function renderHeatmapTable() {
+        const select = document.getElementById("heatmap-select");
+        const compareSelect = document.getElementById("heatmap-compare-select");
+        const containerEl = document.getElementById("heatmap-container");
+        if (!select || !containerEl) return;
+        
+        const items = [
+            { name: "Equity Composite", data: DATA.assets.equity },
+            { name: "Gold Spot", data: DATA.assets.gold },
+            { name: "U.S. Treasuries", data: DATA.assets.treasury },
+            { name: "200-SMA Switch (Gold)", data: DATA.portfolios.sma_gold },
+            { name: "200-SMA Switch (Treasury)", data: DATA.portfolios.sma_treas },
+            { name: "Macro Score (Gold)", data: DATA.portfolios.macro_gold },
+            { name: "Macro Score (Treasury)", data: DATA.portfolios.macro_treas }
+        ];
+        
+        const dates = DATA.dates;
+        const startDateStr = document.getElementById("custom-start-date").value;
+        const endDateStr = document.getElementById("custom-end-date").value;
+        
+        let startIdx = dates.findIndex(d => d >= startDateStr);
+        let endIdx = dates.findIndex(d => d >= endDateStr);
+        if (startIdx === -1) startIdx = 0;
+        if (endIdx === -1 || endIdx < startIdx) endIdx = dates.length - 1;
+        
+        const slicedDates = dates.slice(startIdx, endIdx + 1);
+        
+        const idx = parseInt(select.value);
+        const compareIdx = parseInt(compareSelect.value);
+        
+        const item = items[idx];
+        const slicedVals = item.data.slice(startIdx, endIdx + 1);
+        const byYear = getMonthlyReturns(slicedVals, slicedDates);
+        
+        let compareByYear = null;
+        let compareName = "";
+        if (compareIdx >= 0) {
+            const compItem = items[compareIdx];
+            const compVals = compItem.data.slice(startIdx, endIdx + 1);
+            compareByYear = getMonthlyReturns(compVals, slicedDates);
+            compareName = compItem.name;
+        }
+        
+        const years = Object.keys(byYear).sort((a,b) => b-a);
+        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        
+        let maxAbs = 0.1;
+        years.forEach(yr => {
+            for (let m = 1; m <= 12; m++) {
+                const val = byYear[yr][m];
+                if (val === undefined) continue;
+                
+                let diff = val;
+                if (compareByYear && compareByYear[yr][m] !== undefined) {
+                    diff = val - compareByYear[yr][m];
+                }
+                if (Math.abs(diff) > maxAbs) maxAbs = Math.abs(diff);
+            }
+        });
+        
+        let html = '<table class="heatmap-table"><thead><tr><th>Year</th>';
+        months.forEach(m => html += `<th>${m}</th>`);
+        html += '<th>Annual</th>';
+        html += '</tr></thead><tbody>';
+        
+        years.forEach(year => {
+            html += `<tr><td style="font-weight:700;">${year}</td>`;
+            let annualRetMult = 1.0;
+            let compAnnualRetMult = 1.0;
+            let hasData = false;
+            
+            months.forEach((mStr, mi) => {
+                const mNum = mi + 1;
+                const val = byYear[year][mNum];
+                
+                if (val !== undefined) {
+                    hasData = true;
+                    annualRetMult *= (1 + val / 100);
+                    
+                    let diff = val;
+                    let titleText = `${mStr} ${year}: ${val.toFixed(2)}%`;
+                    
+                    if (compareByYear && compareByYear[year][mNum] !== undefined) {
+                        const cVal = compareByYear[year][mNum];
+                        compAnnualRetMult *= (1 + cVal / 100);
+                        diff = val - cVal;
+                        titleText = `${mStr} ${year}:\n${item.name}: ${val.toFixed(2)}%\n${compareName}: ${cVal.toFixed(2)}%\nDiff: ${diff.toFixed(2)}%`;
+                    }
+                    
+                    const intensity = Math.min(Math.abs(diff) / maxAbs, 1);
+                    const bg = diff >= 0
+                        ? `rgba(16, 185, 129, ${0.1 + intensity * 0.6})`
+                        : `rgba(239, 68, 68, ${0.1 + intensity * 0.6})`;
+                    const textColor = intensity > 0.5 ? '#fff' : (diff >= 0 ? '#10b981' : '#ef4444');
+                    
+                    html += `<td style="background:${bg};color:${textColor}" title="${titleText}">${diff.toFixed(1)}%</td>`;
+                } else {
+                    html += '<td style="color:var(--text-muted)">—</td>';
+                }
+            });
+            
+            if (hasData) {
+                const annVal = (annualRetMult - 1) * 100;
+                let diffAnn = annVal;
+                let titleText = `Annual ${year}: ${annVal.toFixed(2)}%`;
+                
+                if (compareByYear) {
+                    const compAnn = (compAnnualRetMult - 1) * 100;
+                    diffAnn = annVal - compAnn;
+                    titleText = `Annual ${year}:\n${item.name}: ${annVal.toFixed(2)}%\n${compareName}: ${compAnn.toFixed(2)}%\nDiff: ${diffAnn.toFixed(2)}%`;
+                }
+                
+                const aColor = diffAnn >= 0 ? '#10b981' : '#ef4444';
+                html += `<td style="color:${aColor};font-weight:700" title="${titleText}">${diffAnn.toFixed(1)}%</td>`;
+            } else {
+                html += '<td style="color:var(--text-muted)">—</td>';
+            }
+            html += '</tr>';
+        });
+        
+        html += '</tbody></table>';
+        containerEl.innerHTML = html;
+    }
+
+    // ================================================================
+    // Performance Summary Cards
+    // ================================================================
+    function renderMetrics() {
+        const grid = document.getElementById("metrics-grid");
+        const filterSelect = document.getElementById("metrics-filter-select");
+        if (!grid || !filterSelect) return;
+        
+        const items = [
+            { name: "Equity Composite", data: DATA.assets.equity },
+            { name: "Gold Spot", data: DATA.assets.gold },
+            { name: "U.S. Treasuries", data: DATA.assets.treasury },
+            { name: "200-SMA Switch (Gold)", data: DATA.portfolios.sma_gold },
+            { name: "200-SMA Switch (Treasury)", data: DATA.portfolios.sma_treas },
+            { name: "Macro Score (Gold)", data: DATA.portfolios.macro_gold },
+            { name: "Macro Score (Treasury)", data: DATA.portfolios.macro_treas }
+        ];
+        
+        const idx = parseInt(filterSelect.value);
+        const item = items[idx];
+        
+        const dates = DATA.dates;
+        const startDateStr = document.getElementById("custom-start-date").value;
+        const endDateStr = document.getElementById("custom-end-date").value;
+        
+        let startIdx = dates.findIndex(d => d >= startDateStr);
+        let endIdx = dates.findIndex(d => d >= endDateStr);
+        if (startIdx === -1) startIdx = 0;
+        if (endIdx === -1 || endIdx < startIdx) endIdx = dates.length - 1;
+        
+        const slicedVals = item.data.slice(startIdx, endIdx + 1);
+        const startVal = slicedVals[0];
+        const endVal = slicedVals[slicedVals.length - 1];
+        
+        const totalRet = ((endVal - startVal) / startVal) * 100;
+        const days = (new Date(dates[endIdx]) - new Date(dates[startIdx])) / (1000 * 60 * 60 * 24);
+        const annRet = days > 30 ? (Math.pow(endVal / startVal, 365.25 / days) - 1) * 100 : 0;
+        
+        let maxDD = 0;
+        let peak = -Infinity;
+        for (let i = 0; i < slicedVals.length; i++) {
+            if (slicedVals[i] > peak) peak = slicedVals[i];
+            const dd = ((slicedVals[i] - peak) / peak) * 100;
+            if (dd < maxDD) maxDD = dd;
+        }
+        
+        const dailyRets = [];
+        for (let i = 1; i < slicedVals.length; i++) {
+            dailyRets.push((slicedVals[i] - slicedVals[i - 1]) / slicedVals[i - 1]);
+        }
+        let sharpe = 0;
+        let volatility = 0;
+        if (dailyRets.length > 10) {
+            const mean = dailyRets.reduce((a, b) => a + b, 0) / dailyRets.length;
+            const variance = dailyRets.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / (dailyRets.length - 1);
+            const dailyStd = Math.sqrt(variance);
+            const annStd = dailyStd * Math.sqrt(252);
+            volatility = annStd * 100;
+            const excess = annRet - 4.0;
+            sharpe = volatility > 0.001 ? excess / volatility : 0;
+        }
+        
+        grid.innerHTML = `
+            ${metricCard('Total Return', `${totalRet.toLocaleString(undefined, {minimumFractionDigits: 1, maximumFractionDigits: 1})}%`, item.name, totalRet >= 0)}
+            ${metricCard('Annualized Return', `${annRet.toFixed(2)}%`, 'CAGR over selected period', annRet >= 0)}
+            ${metricCard('Max Drawdown', `${maxDD.toFixed(2)}%`, 'Worst peak-to-trough decline', false)}
+            ${metricCard('Sharpe Ratio', sharpe.toFixed(2), 'Risk-adjusted return (4% RF)', sharpe >= 0)}
+            ${metricCard('Volatility', `${volatility.toFixed(2)}%`, 'Annualized variance', null)}
+            ${metricCard('Rebalance Freq', 'Monthly', 'Tactical asset rotation', null)}
+        `;
+    }
+    
+    function metricCard(label, value, subtitle, positive) {
+        const cls = positive === null ? 'neutral' : (positive ? 'positive' : 'negative');
+        return `
+            <div class="metric-card metric-card--${cls}">
+                <div class="metric-card__label">${label}</div>
+                <div class="metric-card__value">${value}</div>
+                <div class="metric-card__subtitle">${subtitle}</div>
+            </div>`;
     }

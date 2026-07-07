@@ -339,6 +339,60 @@
                     </div>
                 </section>
 
+                <!-- Performance Summary Cards -->
+                <section class="kpi-panel" style="padding: 20px;">
+                    <div class="metrics-header" style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 12px; margin-top: 4px;">
+                        <h2 style="font-size: 1.1rem; color: var(--text-primary); margin: 0; display:flex; align-items:center; gap: 8px;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                            </svg>
+                            Performance Summary
+                        </h2>
+                        <select id="metrics-filter-select" style="background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 6px; padding: 6px 12px; font-family: 'Inter', sans-serif; font-size: 0.9rem; cursor:pointer; outline:none;">
+                            <option value="0">Equity Composite</option>
+                            <option value="1">Gold Spot</option>
+                            <option value="2">U.S. Treasuries</option>
+                            <option value="3">200-SMA Switch (Gold)</option>
+                            <option value="4">200-SMA Switch (Treasury)</option>
+                            <option value="5">Macro Score (Gold)</option>
+                            <option value="6" selected>Macro Score (Treasury)</option>
+                        </select>
+                    </div>
+                    <div class="metrics-grid" id="metrics-grid"></div>
+                </section>
+
+                <!-- Allocation Inspector -->
+                <section class="card" id="holdings-card" style="margin-top: 24px;">
+                    <div class="card__header">
+                        <div class="card__title">
+                            <svg class="card__title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            </svg>
+                            Allocation Inspector
+                        </div>
+                    </div>
+                    <div class="holdings-controls" id="holdings-controls" style="display:flex; align-items:center; gap:20px; flex-wrap:wrap; margin-bottom:16px; padding: 0 16px;"></div>
+                    <div class="holdings-grid" id="holdings-grid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:16px; padding: 0 16px 16px 16px;"></div>
+                </section>
+
+                <!-- Monthly Returns Heatmap -->
+                <section class="card" id="heatmap-card" style="margin-top: 24px;">
+                    <div class="card__header">
+                        <div class="card__title">
+                            <svg class="card__title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="3" y1="9" x2="21" y2="9"></line>
+                                <line x1="9" y1="21" x2="9" y2="9"></line>
+                            </svg>
+                            Monthly Returns Heatmap
+                        </div>
+                    </div>
+                    <div class="heatmap-controls" id="heatmap-controls" style="display:flex; align-items:center; gap:20px; flex-wrap:wrap; margin-bottom:16px; padding: 0 16px;"></div>
+                    <div class="heatmap-container" id="heatmap-container" style="overflow-x:auto; padding: 0 16px 16px 16px;"></div>
+                </section>
+
             </div>
         </div>
     </div>
