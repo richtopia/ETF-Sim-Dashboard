@@ -189,7 +189,7 @@
         
         // Ensure final point is included
         const lastIdx = dates.length - 1;
-        if (i - step < lastIdx) {
+        if (result.length > 0 && result[result.length - 1].x.getTime() !== new Date(dates[lastIdx]).getTime()) {
             result.push({
                 x: new Date(dates[lastIdx]),
                 y: values[lastIdx]
