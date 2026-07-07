@@ -227,12 +227,16 @@
                 <div style="display:flex; flex-direction:column; gap:12px; margin-bottom: 24px;">
                     <div>
                         <label class="control-label" style="display:block; margin-bottom:4px; font-size:0.75rem; text-transform:uppercase; color:var(--text-muted);">Start Date</label>
-                        <input type="date" id="start-date-input" style="width:100%; padding:8px; background:var(--bg-input); border:1px solid var(--border-color); border-radius:6px; color:#fff; font-family:'Inter', sans-serif;">
+                        <input type="date" id="custom-start-date" style="width:100%; padding:8px; background:var(--bg-input); border:1px solid var(--border-color); border-radius:6px; color:#fff; font-family:'Inter', sans-serif;">
                     </div>
                     <div>
                         <label class="control-label" style="display:block; margin-bottom:4px; font-size:0.75rem; text-transform:uppercase; color:var(--text-muted);">End Date</label>
-                        <input type="date" id="end-date-input" style="width:100%; padding:8px; background:var(--bg-input); border:1px solid var(--border-color); border-radius:6px; color:#fff; font-family:'Inter', sans-serif;">
+                        <input type="date" id="custom-end-date" style="width:100%; padding:8px; background:var(--bg-input); border:1px solid var(--border-color); border-radius:6px; color:#fff; font-family:'Inter', sans-serif;">
                     </div>
+                    <button id="apply-custom-btn" class="preset-btn" style="width:100%; padding: 8px; background:rgba(16, 185, 129, 0.2); border-color:rgba(16, 185, 129, 0.4); color:#fff; font-weight:600;">Apply Custom Dates</button>
+                    <label class="normalize-label" style="display:flex; align-items:center; gap:8px; font-size:0.8rem; color:var(--text-secondary); cursor:pointer; margin-top: 4px;">
+                        <input type="checkbox" id="normalize-toggle" checked style="cursor:pointer;"> Normalize to start date
+                    </label>
                 </div>
 
                 <h3 class="panel-title">Asset Toggles</h3>

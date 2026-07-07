@@ -26,8 +26,8 @@
             
             // Set initial date inputs
             const dates = DATA.dates;
-            const startInput = document.getElementById("start-date-input");
-            const endInput = document.getElementById("end-date-input");
+            const startInput = document.getElementById("custom-start-date");
+            const endInput = document.getElementById("custom-end-date");
             
             startInput.value = dates[0];
             startInput.min = dates[0];
@@ -46,10 +46,16 @@
 
             startInput.addEventListener("change", () => {
                 clearPresetActiveStates();
-                updateDashboard();
             });
             endInput.addEventListener("change", () => {
                 clearPresetActiveStates();
+            });
+            
+            document.getElementById("apply-custom-btn").addEventListener("click", () => {
+                updateDashboard();
+            });
+            
+            document.getElementById("normalize-toggle").addEventListener("change", () => {
                 updateDashboard();
             });
             
@@ -107,8 +113,8 @@
         if (!DATA) return;
         
         const dates = DATA.dates;
-        const startDateStr = document.getElementById("start-date-input").value;
-        const endDateStr = document.getElementById("end-date-input").value;
+        const startDateStr = document.getElementById("custom-start-date").value;
+        const endDateStr = document.getElementById("custom-end-date").value;
         
         // Find indices
         let startIdx = dates.findIndex(d => d >= startDateStr);
@@ -240,8 +246,8 @@
             
             // Find sliced date indexes based on date inputs
             const dates = DATA.dates;
-            const startDateStr = document.getElementById("start-date-input").value;
-            const endDateStr = document.getElementById("end-date-input").value;
+            const startDateStr = document.getElementById("custom-start-date").value;
+            const endDateStr = document.getElementById("custom-end-date").value;
             
             let startIdx = dates.findIndex(d => d >= startDateStr);
             let endIdx = dates.findIndex(d => d >= endDateStr);
@@ -317,9 +323,11 @@
                 // Slice values
                 const slicedVals = cfg.data.slice(startIdx, endIdx + 1);
                 
-                // Normalize sliced values to start at 100 on start date for clean comparison
-                const normVal = slicedVals[0];
-                const normalizedVals = slicedVals.map(v => (v / normVal) * 100);
+                // Normalize sliced values if checkbox is checked
+                const isNormalize = document.getElementById("normalize-toggle").checked;
+                const normalizedVals = isNormalize 
+                    ? slicedVals.map(v => (v / slicedVals[0]) * 100)
+                    : slicedVals;
                 
                 datasets.push({
                     label: cfg.label,
@@ -359,7 +367,10 @@
                             color: '#555570',
                             font: { size: 10 },
                             callback: function(value) {
-                                return value.toLocaleString() + '%';
+                                const isNormalize = document.getElementById("normalize-toggle").checked;
+                                return isNormalize 
+                                    ? value.toLocaleString() + '%' 
+                                    : '$' + value.toLocaleString(undefined, {maximumFractionDigits: 0});
                             }
                         }
                     }
