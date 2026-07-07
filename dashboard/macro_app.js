@@ -38,7 +38,7 @@
             endInput.max = dates[dates.length - 1];
             
             // Event listeners
-            const presetBtns = document.querySelectorAll(".preset-btn");
+            const presetBtns = document.querySelectorAll(".preset-btn[data-start]");
             
             function clearPresetActiveStates() {
                 presetBtns.forEach(b => b.classList.remove("preset-btn--active"));
