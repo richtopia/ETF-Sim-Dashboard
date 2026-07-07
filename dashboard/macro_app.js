@@ -38,11 +38,42 @@
             endInput.max = dates[dates.length - 1];
             
             // Event listeners
-            startInput.addEventListener("change", updateDashboard);
-            endInput.addEventListener("change", updateDashboard);
+            const presetBtns = document.querySelectorAll(".preset-btn");
+            
+            function clearPresetActiveStates() {
+                presetBtns.forEach(b => b.classList.remove("preset-btn--active"));
+            }
+
+            startInput.addEventListener("change", () => {
+                clearPresetActiveStates();
+                updateDashboard();
+            });
+            endInput.addEventListener("change", () => {
+                clearPresetActiveStates();
+                updateDashboard();
+            });
             
             document.getElementById("scale-log").addEventListener("click", () => setChartScale('logarithmic'));
             document.getElementById("scale-linear").addEventListener("click", () => setChartScale('linear'));
+            
+            // Preset Regimes buttons
+            presetBtns.forEach(btn => {
+                btn.addEventListener("click", () => {
+                    clearPresetActiveStates();
+                    btn.classList.add("preset-btn--active");
+                    
+                    const startVal = btn.getAttribute("data-start");
+                    let endVal = btn.getAttribute("data-end");
+                    if (endVal === "max") {
+                        endVal = dates[dates.length - 1];
+                    }
+                    
+                    startInput.value = startVal;
+                    endInput.value = endVal;
+                    
+                    updateDashboard();
+                });
+            });
             
             // Toggles
             const checkboxIds = [

@@ -79,6 +79,32 @@
             letter-spacing: 0.5px;
             color: var(--text-muted);
         }
+
+        .preset-btn {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 0.725rem;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+
+        .preset-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .preset-btn--active {
+            background: rgba(16, 185, 129, 0.15);
+            border-color: rgba(16, 185, 129, 0.4);
+            color: #fff;
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
@@ -186,6 +212,17 @@
         <div class="macro-grid">
             <!-- Sidebar Controls -->
             <aside class="kpi-panel">
+                <h3 class="panel-title">Macro Regimes</h3>
+                <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 24px;">
+                    <button class="preset-btn preset-btn--active" data-start="1954-07-01" data-end="max">Max Period</button>
+                    <button class="preset-btn" data-start="1973-01-01" data-end="1980-12-31">70s Stagflation</button>
+                    <button class="preset-btn" data-start="1987-01-01" data-end="1989-12-31">1987 Crash</button>
+                    <button class="preset-btn" data-start="2000-01-01" data-end="2002-12-31">Dot-Com Crash</button>
+                    <button class="preset-btn" data-start="2007-06-01" data-end="2009-06-30">2008 GFC</button>
+                    <button class="preset-btn" data-start="2020-01-01" data-end="2020-12-31">2020 COVID</button>
+                    <button class="preset-btn" data-start="2022-01-01" data-end="2024-12-31">Fed Hikes (22-24)</button>
+                </div>
+
                 <h3 class="panel-title">Date Filters</h3>
                 <div style="display:flex; flex-direction:column; gap:12px; margin-bottom: 24px;">
                     <div>
