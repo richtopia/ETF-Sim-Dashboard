@@ -385,6 +385,20 @@ def select_top_n_by_high_dividend(
     return yields.index[:n].tolist()
 
 
+def get_base_company_ticker(ticker: str) -> str:
+    """Return the base company identifier to prevent duplicate share classes."""
+    ticker_upper = ticker.upper()
+    mapping = {
+        "GOOGL": "GOOG",
+        "FOXA": "FOX",
+        "NWSA": "NWS",
+        "UAA": "UA",
+        "LEN.B": "LEN",
+        "LEN_B": "LEN",
+    }
+    return mapping.get(ticker_upper, ticker_upper)
+
+
 def select_ult_yield(
     prices: pd.DataFrame,
     shares: dict[str, float],
@@ -410,11 +424,12 @@ def select_ult_yield(
         p2 = select_top_n_by_high_dividend(prices, dividends, date, 5)
 
     combined = []
-    seen = set()
+    seen_comp = set()
     for t in p1 + p2:
-        if t not in seen:
+        base = get_base_company_ticker(t)
+        if base not in seen_comp:
             combined.append(t)
-            seen.add(t)
+            seen_comp.add(base)
 
     return combined[:n]
 
@@ -444,11 +459,12 @@ def select_ult_vix(
         p2 = select_top_n_by_high_dividend(prices, dividends, date, 5)
 
     combined = []
-    seen = set()
+    seen_comp = set()
     for t in p1 + p2:
-        if t not in seen:
+        base = get_base_company_ticker(t)
+        if base not in seen_comp:
             combined.append(t)
-            seen.add(t)
+            seen_comp.add(base)
 
     return combined[:n]
 
@@ -479,11 +495,12 @@ def select_ult_200sma(
         p2 = select_top_n_by_high_dividend(prices, dividends, date, 5)
 
     combined = []
-    seen = set()
+    seen_comp = set()
     for t in p1 + p2:
-        if t not in seen:
+        base = get_base_company_ticker(t)
+        if base not in seen_comp:
             combined.append(t)
-            seen.add(t)
+            seen_comp.add(base)
 
     return combined[:n]
 
@@ -513,11 +530,12 @@ def select_ult_riskkpi(
         p2 = select_top_n_by_high_dividend(prices, dividends, date, 5)
 
     combined = []
-    seen = set()
+    seen_comp = set()
     for t in p1 + p2:
-        if t not in seen:
+        base = get_base_company_ticker(t)
+        if base not in seen_comp:
             combined.append(t)
-            seen.add(t)
+            seen_comp.add(base)
 
     return combined[:n]
 
@@ -578,20 +596,22 @@ def select_ult_hybrid_weights(
     p_mom = select_top_n_by_momentum(prices, date, 5)
     p_mc = select_top_n_by_market_cap(prices, shares, date, 5)
     growth_tickers = []
-    seen_g = set()
+    seen_g_comp = set()
     for t in p_mom + p_mc:
-        if t not in seen_g:
+        base = get_base_company_ticker(t)
+        if base not in seen_g_comp:
             growth_tickers.append(t)
-            seen_g.add(t)
+            seen_g_comp.add(base)
 
     p_vol = select_top_n_by_low_volatility(prices, date, 5)
     p_div = select_top_n_by_high_dividend(prices, dividends, date, 5)
     defensive_tickers = []
-    seen_d = set()
+    seen_d_comp = set()
     for t in p_vol + p_div:
-        if t not in seen_d:
+        base = get_base_company_ticker(t)
+        if base not in seen_d_comp:
             defensive_tickers.append(t)
-            seen_d.add(t)
+            seen_d_comp.add(base)
 
     # 5. Build weights dictionary
     weights = {}
