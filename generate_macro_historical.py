@@ -99,6 +99,10 @@ def main():
     dgs10 = fetch_fred_csv("DGS10")             # Daily 10-Year Treasury Yield (starts 1962)
     unrate = fetch_fred_csv("UNRATE")           # Monthly Unemployment Rate (starts 1948)
     usrec = fetch_fred_csv("USREC")             # NBER Recession indicator (starts 1854)
+    
+    # Fetch Trade Weighted USD Index Data (active Broad + legacy Major Currencies to cover 1973+)
+    dtwexbgs = fetch_fred_csv("DTWEXBGS")       # Active Broad Index (starts 2006-01-02)
+    dtwexm = fetch_fred_csv("DTWEXM")           # Discontinued Major Currencies Index (covers 1973-01-02 to 2019-12-31)
 
     # 2. Fetch Gold Historical series
     gold_monthly = fetch_gold_historical()
@@ -121,6 +125,45 @@ def main():
     dgs10 = dgs10.reindex(all_dates).ffill()
     gold_monthly = gold_monthly.reindex(all_dates).ffill().bfill()
     usrec = usrec.reindex(all_dates).ffill().fillna(0).astype(int)
+
+    # Stitch Trade Weighted USD Index back to 1973, keeping flat before 1973-01-02 (Bretton Woods fixed era)
+    logger.info("Stitching Trade-Weighted Dollar Index...")
+    
+    # 1) Scale DTWEXM so that its final price (2019-12-31) matches DTWEXBGS on that same day
+    dtwexbgs_clean = dtwexbgs.reindex(all_dates)
+    dtwexm_clean = dtwexm.reindex(all_dates)
+    
+    # Find a scaling factor at a common date where both are valid (e.g. 2006-01-03)
+    common_dates = dtwexbgs_clean.dropna().index.intersection(dtwexm_clean.dropna().index)
+    if not common_dates.empty:
+        align_date = common_dates[0]
+        scale_factor = dtwexbgs_clean.loc[align_date] / dtwexm_clean.loc[align_date]
+        logger.info(f"Aligning DTWEXM to DTWEXBGS at {align_date.strftime('%Y-%m-%d')} with factor {scale_factor:.6f}")
+        dtwexm_scaled = dtwexm_clean * scale_factor
+    else:
+        # Fallback if no overlap (e.g. alignment factor of 1.15)
+        dtwexm_scaled = dtwexm_clean * 1.15
+
+    usd_series = pd.Series(np.nan, index=all_dates)
+    
+    # Assign stitched values
+    for date in all_dates:
+        if date >= pd.Timestamp("2006-01-02"):
+            val = dtwexbgs_clean.loc[date]
+            if pd.isna(val):
+                val = dtwexbgs_clean.loc[:date].ffill().iloc[-1] if not dtwexbgs_clean.loc[:date].dropna().empty else 100.0
+            usd_series.loc[date] = val
+        elif date >= pd.Timestamp("1973-01-02"):
+            val = dtwexm_scaled.loc[date]
+            if pd.isna(val):
+                val = dtwexm_scaled.loc[:date].ffill().iloc[-1] if not dtwexm_scaled.loc[:date].dropna().empty else 100.0
+            usd_series.loc[date] = val
+        else:
+            # Flat pre-1973 (Bretton Woods fixed-rate era)
+            usd_series.loc[date] = dtwexm_scaled.dropna().iloc[0] if not dtwexm_scaled.dropna().empty else 100.0
+
+    usd_series = usd_series.ffill().bfill()
+    usd_sma200 = usd_series.rolling(200).mean()
 
     # 4. Build Gold Spot Index (fixed at $35/oz before 1968-12-30)
     logger.info("Building Gold return index...")
@@ -228,6 +271,7 @@ def main():
     unemp_state_series = [0.0]
     fed_state_series = [0.0]
     sma_state_series = [0.0]
+    usd_state_series = [0.0]
     
     # Skip first day
     for i in range(1, len(all_dates)):
@@ -257,19 +301,29 @@ def main():
             fed_change = float(fed_slice.iloc[-1])
         fed_hiking = fed_change >= 1.00
         
-        # Compute Macro Score (3-Factor)
+        # Determine USD Strength State (USD > 200 SMA)
+        u_val = float(usd_series.loc[prev_date])
+        u_sma = float(usd_sma200.loc[prev_date]) if pd.notna(usd_sma200.loc[prev_date]) else np.nan
+        usd_strong = False
+        if pd.notna(u_val) and pd.notna(u_sma):
+            usd_strong = u_val > u_sma
+            
+        # Compute Macro Score (4-Factor Equal-Weighted)
         score = 0.0
         if below_sma:
-            score += 30.0
+            score += 25.0
         if unemp_recession:
-            score += 35.0
+            score += 25.0
         if fed_hiking:
-            score += 35.0
+            score += 25.0
+        if usd_strong:
+            score += 25.0
             
         # Record indicator states (as 0 or 100 for UI scaling)
         sma_state_series.append(100.0 if below_sma else 0.0)
         unemp_state_series.append(100.0 if unemp_recession else 0.0)
         fed_state_series.append(100.0 if fed_hiking else 0.0)
+        usd_state_series.append(100.0 if usd_strong else 0.0)
         macro_score_series.append(score)
         
         # Simulate Portfolios (monthly rebalancing constraint)
@@ -315,7 +369,8 @@ def main():
             "macro_score": macro_score_series,
             "sma_state": sma_state_series,
             "unemp_state": unemp_state_series,
-            "fed_state": fed_state_series
+            "fed_state": fed_state_series,
+            "usd_state": usd_state_series
         }
     }
     

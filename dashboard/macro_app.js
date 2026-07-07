@@ -396,6 +396,7 @@
         const smaSlice = DATA.indicators.sma_state.slice(startIdx, endIdx + 1);
         const unempSlice = DATA.indicators.unemp_state.slice(startIdx, endIdx + 1);
         const fedSlice = DATA.indicators.fed_state.slice(startIdx, endIdx + 1);
+        const usdSlice = DATA.indicators.usd_state.slice(startIdx, endIdx + 1);
         
         if (scoreChart) {
             scoreChart.destroy();
@@ -448,6 +449,17 @@
                         pointRadius: 0,
                         tension: 0,
                         order: 4
+                    },
+                    {
+                        label: 'US Dollar > 200-SMA',
+                        data: downsampleTimeseries(slicedDates, usdSlice),
+                        borderColor: 'rgba(139, 92, 246, 0.4)',
+                        backgroundColor: 'rgba(139, 92, 246, 0.05)',
+                        borderWidth: 0,
+                        fill: true,
+                        pointRadius: 0,
+                        tension: 0,
+                        order: 5
                     }
                 ]
             },
